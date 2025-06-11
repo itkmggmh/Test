@@ -20,7 +20,7 @@
       margin-top: 0;
     }
     .counter {
-      font-size: 1.5em;
+      font-size: 1.2em;
       margin: 10px 0;
     }
     button {
@@ -28,51 +28,136 @@
       font-size: 1em;
       margin: 0 5px;
     }
+    #summary {
+      background: #fffbe6;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 2px solid #ffd700;
+      border-radius: 8px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
 
   <h1>🥤 Getränkelager Übersicht</h1>
 
-  <div class="brand" id="coca">
-    <h2>Coca-Cola</h2>
-    <div class="counter" id="coca-count">0 Stück</div>
-    <button onclick="updateCount('coca', 1)">+1</button>
-    <button onclick="updateCount('coca', -1)">-1</button>
+  <div id="summary">
+    <div><strong>Gesamtanzahl:</strong> <span id="total-count">0</span> Stück</div>
+    <div><strong>Letzte Änderung:</strong> <span id="last-updated">-</span></div>
   </div>
 
-  <div class="brand" id="redbull">
+  <div class="brand">
     <h2>Red Bull</h2>
-    <div class="counter" id="redbull-count">0 Stück</div>
-    <button onclick="updateCount('redbull', 1)">+1</button>
-    <button onclick="updateCount('redbull', -1)">-1</button>
+    <div id="redbull-group">
+      <script>
+        const redbullTypes = ['normal', 'blau', 'gelb', 'grün', 'rosa'];
+        redbullTypes.forEach(type => {
+          document.write(`
+            <div><strong>Red Bull ${type.charAt(0).toUpperCase() + type.slice(1)}</strong></div>
+            <div class="counter" id="redbull-${type}-count">0 Stück</div>
+            <button onclick="updateCount('redbull-${type}', 1)">+1</button>
+            <button onclick="updateCount('redbull-${type}', -1)">-1</button><br><br>
+          `);
+        });
+      </script>
+    </div>
   </div>
 
-  <div class="brand" id="fanta">
-    <h2>Fanta</h2>
+  <div class="brand" id="aldi">
+    <h2>Aldi</h2>
+    <div class="counter" id="aldi-count">0 Stück</div>
+    <button onclick="updateCount('aldi', 1)">+1</button>
+    <button onclick="updateCount('aldi', -1)">-1</button>
+  </div>
+
+  <div class="brand" id="sonstiges">
+    <h2>Sonstiges</h2>
     <div class="counter" id="fanta-count">0 Stück</div>
     <button onclick="updateCount('fanta', 1)">+1</button>
-    <button onclick="updateCount('fanta', -1)">-1</button>
+    <button onclick="updateCount('fanta', -1)">-1</button><br><br>
+
+    <div class="counter" id="coca-count">0 Stück</div>
+    <button onclick="updateCount('coca', 1)">+1</button>
+    <button onclick="updateCount('coca', -1)">-1</button><br><br>
+
+    <div class="counter" id="eistee-count">0 Stück</div>
+    <button onclick="updateCount('eistee', 1)">+1</button>
+    <button onclick="updateCount('eistee', -1)">-1</button>
+  </div>
+
+  <div class="brand">
+    <h2>Eigenes Getränk</h2>
+    <input type="text" id="custom-name" placeholder="Name des Getränks">
+    <button onclick="addCustomDrink()">Hinzufügen</button>
+    <div id="custom-container"></div>
   </div>
 
   <script>
-    const stock = {
-      coca: parseInt(localStorage.getItem('coca')) || 0,
-      redbull: parseInt(localStorage.getItem('redbull')) || 0,
-      fanta: parseInt(localStorage.getItem('fanta')) || 0
-    };
+    let stock = {};
 
-    function updateCount(brand, change) {
-      stock[brand] += change;
-      if (stock[brand] < 0) stock[brand] = 0;
-      localStorage.setItem(brand, stock[brand]);
-      document.getElementById(`${brand}-count`).textContent = stock[brand] + ' Stück';
+    const drinkKeys = [
+      'aldi', 'fanta', 'coca', 'eistee',
+      'redbull-normal', 'redbull-blau', 'redbull-gelb', 'redbull-grün', 'redbull-rosa'
+    ];
+
+    function updateCount(key, change) {
+      stock[key] = (stock[key] || 0) + change;
+      if (stock[key] < 0) stock[key] = 0;
+      localStorage.setItem(key, stock[key]);
+      document.getElementById(`${key}-count`).textContent = stock[key] + ' Stück';
+      updateTotalAndDate();
+    }
+
+    function updateTotalAndDate() {
+      const total = Object.values(stock).reduce((sum, v) => sum + v, 0);
+      document.getElementById("total-count").textContent = total;
+      const date = new Date().toLocaleString('de-DE');
+      localStorage.setItem('last-updated', date);
+      document.getElementById("last-updated").textContent = date;
+    }
+
+    function addCustomDrink() {
+      const name = document.getElementById("custom-name").value.trim();
+      if (!name) return;
+
+      const key = `custom-${name.toLowerCase().replace(/\s+/g, '-')}`;
+      if (document.getElementById(`${key}-count`)) return; // schon hinzugefügt
+
+      stock[key] = parseInt(localStorage.getItem(key)) || 0;
+
+      const container = document.getElementById("custom-container");
+      const html = `
+        <div><strong>${name}</strong></div>
+        <div class="counter" id="${key}-count">${stock[key]} Stück</div>
+        <button onclick="updateCount('${key}', 1)">+1</button>
+        <button onclick="updateCount('${key}', -1)">-1</button><br><br>
+      `;
+      container.insertAdjacentHTML('beforeend', html);
+      updateTotalAndDate();
     }
 
     window.onload = function () {
-      for (let brand in stock) {
-        document.getElementById(`${brand}-count`).textContent = stock[brand] + ' Stück';
+      drinkKeys.forEach(key => {
+        stock[key] = parseInt(localStorage.getItem(key)) || 0;
+        const el = document.getElementById(`${key}-count`);
+        if (el) el.textContent = stock[key] + ' Stück';
+      });
+
+      // Custom drinks wiederherstellen
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('custom-')) {
+          const name = key.replace('custom-', '').replace(/-/g, ' ');
+          document.getElementById("custom-name").value = name;
+          addCustomDrink();
+        }
       }
+
+      updateTotalAndDate();
     };
   </script>
 
