@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Getränkelager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .brand {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .brand h2 {
+      margin-top: 0;
+    }
+    .counter {
+      font-size: 1.5em;
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 1em;
+      margin: 0 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🥤 Getränkelager Übersicht</h1>
+
+  <div class="brand" id="coca">
+    <h2>Coca-Cola</h2>
+    <div class="counter" id="coca-count">0 Stück</div>
+    <button onclick="updateCount('coca', 1)">+1</button>
+    <button onclick="updateCount('coca', -1)">-1</button>
+  </div>
+
+  <div class="brand" id="redbull">
+    <h2>Red Bull</h2>
+    <div class="counter" id="redbull-count">0 Stück</div>
+    <button onclick="updateCount('redbull', 1)">+1</button>
+    <button onclick="updateCount('redbull', -1)">-1</button>
+  </div>
+
+  <div class="brand" id="fanta">
+    <h2>Fanta</h2>
+    <div class="counter" id="fanta-count">0 Stück</div>
+    <button onclick="updateCount('fanta', 1)">+1</button>
+    <button onclick="updateCount('fanta', -1)">-1</button>
+  </div>
+
+  <script>
+    const stock = {
+      coca: parseInt(localStorage.getItem('coca')) || 0,
+      redbull: parseInt(localStorage.getItem('redbull')) || 0,
+      fanta: parseInt(localStorage.getItem('fanta')) || 0
+    };
+
+    function updateCount(brand, change) {
+      stock[brand] += change;
+      if (stock[brand] < 0) stock[brand] = 0;
+      localStorage.setItem(brand, stock[brand]);
+      document.getElementById(`${brand}-count`).textContent = stock[brand] + ' Stück';
+    }
+
+    window.onload = function () {
+      for (let brand in stock) {
+        document.getElementById(`${brand}-count`).textContent = stock[brand] + ' Stück';
+      }
+    };
+  </script>
+
+</body>
+</html>
